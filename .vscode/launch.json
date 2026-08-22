@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-ExpenseManagerApplication<expense-manager-mt>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.expensemanager.ExpenseManagerApplication",
+            "projectName": "expense-manager-mt",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
