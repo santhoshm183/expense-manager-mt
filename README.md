@@ -4,14 +4,15 @@ A Spring Boot REST API for personal income, savings, and expense tracking.
 
 Set `SUPABASE_DB_PASSWORD` before starting it. The expense-only schema can be applied directly in Supabase using [`supabase/schema.sql`](supabase/schema.sql).
 
-For Render, define these environment variables. The application accepts either `postgresql://...` or `jdbc:postgresql://...` for `SUPABASE_DB_URL` and normalizes it automatically:
+For Render, use the Supabase **Session pooler** connection details from `Supabase Dashboard -> Connect -> Session pooler`. The pooler is recommended because Render may not be able to reach the direct database host over IPv6. Define these environment variables:
 
 ```text
-SUPABASE_DB_URL=jdbc:postgresql://db.unbuqptxmnmgrqvldlea.supabase.co:5432/postgres?sslmode=require
-SUPABASE_DB_USERNAME=postgres
+SUPABASE_DB_URL=postgresql://aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require
+SUPABASE_DB_USERNAME=postgres.unbuqptxmnmgrqvldlea
 SUPABASE_DB_PASSWORD=your-supabase-database-password
 ```
 
+Copy the exact host, port, username, and database name shown by Supabase; do not type the example placeholders. The application accepts either `postgresql://...` or `jdbc:postgresql://...` and normalizes it automatically.
 
 ```powershell
 mvn spring-boot:run
