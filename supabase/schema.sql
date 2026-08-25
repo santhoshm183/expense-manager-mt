@@ -117,8 +117,7 @@ create table if not exists chit_auctions (
   profit_amount numeric(14,2) not null check (profit_amount >= 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (chit_id, auction_month),
-  unique (chit_id, bid_no)
+  unique (chit_id, bid_no, winning_member_id)
 );
 
 alter table chit_auctions add column if not exists extra_hand boolean not null default false;

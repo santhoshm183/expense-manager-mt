@@ -26,6 +26,7 @@ import com.expensemanager.dto.InstallmentRequest;
 import com.expensemanager.dto.InstallmentResponse;
 import com.expensemanager.dto.AuctionRequest;
 import com.expensemanager.dto.AuctionResponse;
+import com.expensemanager.dto.ChitDashboardResponse;
 import com.expensemanager.entity.Chit;
 import com.expensemanager.entity.ChitStatus;
 import com.expensemanager.entity.Member;
@@ -41,6 +42,8 @@ import com.expensemanager.repository.AuctionRepository;
 @CrossOrigin(origins = "*")
 public class ChitController {
     private static final DateTimeFormatter ID_DATE = DateTimeFormatter.ofPattern("yyyy-MM");
+    private static final String EXTRA_HAND_YES = "yes";
+    private static final String AVAILABLE_BALANCE_MESSAGE = "Available balance is less. We can not do bid.";
     private final ChitRepository chitRepository;
     private final MemberRepository memberRepository;
     private final InstallmentRepository installmentRepository;
@@ -57,6 +60,22 @@ public class ChitController {
     @GetMapping("/chits")
     public List<Chit> chits() {
         return chitRepository.findAllByOrderByStartDateDesc();
+    }
+
+    @GetMapping("/chits/{id}/summary")
+    public ResponseEntity<ChitDashboardResponse> chitSummary(@PathVariable java.util.UUID id) {
+        Chit chit = chitRepository.findById(id).orElse(null);
+        if (chit == null)
+            return ResponseEntity.notFound().build();
+        Integer latestHand = installmentRepository.findMaxHandByChitId(id);
+        BigDecimal collection = latestHand == null ? BigDecimal.ZERO
+                : installmentRepository.sumAmountByChitIdAndHand(id, latestHand);
+        long paidMembers = latestHand == null ? 0 : installmentRepository.countByChitIdAndHand(id, latestHand);
+        long membersNotPaid = Math.max(0, chit.getMemberCount() - paidMembers);
+        return ResponseEntity.ok(new ChitDashboardResponse(id, collection,
+                auctionRepository.maxProfitAmountByChitId(id), membersNotPaid, latestHand,
+                auctionRepository.countRegularHandsByChitId(id), auctionRepository.countExtraHandsByChitId(id),
+                auctionRepository.sumNetAmountPaidByChitId(id), auctionRepository.sumAgentAmountByChitId(id)));
     }
 
     @PostMapping("/chits")
@@ -177,13 +196,13 @@ public class ChitController {
 
     @PostMapping("/auctions")
     @Transactional
-    public ResponseEntity<AuctionResponse> createAuction(@Valid @RequestBody AuctionRequest request) {
+    public ResponseEntity<?> createAuction(@Valid @RequestBody AuctionRequest request) {
         return saveAuction(null, request);
     }
 
     @PutMapping("/auctions/{id}")
     @Transactional
-    public ResponseEntity<AuctionResponse> updateAuction(@PathVariable java.util.UUID id,
+    public ResponseEntity<?> updateAuction(@PathVariable java.util.UUID id,
             @Valid @RequestBody AuctionRequest request) {
         Auction auction = auctionRepository.findById(id).orElse(null);
         if (auction == null)
@@ -203,31 +222,55 @@ public class ChitController {
         return ResponseEntity.noContent().build();
     }
 
-    private ResponseEntity<AuctionResponse> saveAuction(Auction existing, AuctionRequest request) {
+    private ResponseEntity<?> saveAuction(Auction existing, AuctionRequest request) {
         Chit chit = chitRepository.findById(request.chitId()).orElse(null);
         Member member = memberRepository.findById(request.winningMemberId()).orElse(null);
         if (chit == null || member == null || !member.getChit().getId().equals(chit.getId())
                 || request.bidAmount().compareTo(chit.getTotalAmount()) > 0) {
             return ResponseEntity.notFound().build();
         }
+        boolean extraHandSelected = request.extraHand();
         BigDecimal agentAmount = chit.getAgentPercentage().compareTo(BigDecimal.ZERO) > 0
                 ? chit.getMonthlyInstallment().multiply(chit.getAgentPercentage()).divide(BigDecimal.valueOf(100), 2,
                         RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
         BigDecimal netAmountPaid = chit.getTotalAmount().subtract(request.bidAmount());
         BigDecimal profitAmount = request.bidAmount().subtract(agentAmount);
-        if (profitAmount.signum() < 0)
-            return ResponseEntity.badRequest().build();
+        if (profitAmount.signum() < 0) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Available balance is less. We can not do bid."));
+        }
+        if (extraHandSelected) {
+            BigDecimal previousProfitTotal = auctionRepository.sumProfitAmountByChitId(chit.getId())
+                    .orElse(BigDecimal.ZERO);
+            if (existing != null) {
+                previousProfitTotal = previousProfitTotal.subtract(existing.getProfitAmount());
+            }
+            BigDecimal requiredBalance = profitAmount.add(previousProfitTotal);
+            if (netAmountPaid.compareTo(requiredBalance) < 0) {
+                return ResponseEntity.badRequest().body(Map.of("message", AVAILABLE_BALANCE_MESSAGE));
+            }
+
+            List<Auction> chitAuctions = auctionRepository
+                    .findAllByChitIdOrderByAuctionMonthDescBidNoDesc(chit.getId());
+            for (Auction chitAuction : chitAuctions) {
+                if (existing == null || !chitAuction.getId().equals(existing.getId())) {
+                    chitAuction.setProfitAmount(BigDecimal.ZERO);
+                    auctionRepository.save(chitAuction);
+                }
+            }
+            profitAmount = requiredBalance.subtract(netAmountPaid);
+        }
         if (existing != null && !existing.getWinningMember().getId().equals(member.getId())) {
             existing.getWinningMember().markChitTaken(false);
         }
+        boolean extraHandValue = request.extraHand();
         Auction auction = existing == null
-                ? new Auction(chit, request.bidNo(), request.extraHand(), request.auctionMonth(), request.bidAmount(),
+                ? new Auction(chit, request.bidNo(), extraHandValue, request.auctionMonth(), request.bidAmount(),
                         member,
                         netAmountPaid, agentAmount, profitAmount)
                 : existing;
         if (existing != null)
-            auction.update(chit, request.bidNo(), request.extraHand(), request.auctionMonth(), request.bidAmount(),
+            auction.update(chit, request.bidNo(), extraHandValue, request.auctionMonth(), request.bidAmount(),
                     member,
                     netAmountPaid, agentAmount, profitAmount);
         member.markChitTaken(true);

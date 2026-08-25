@@ -115,6 +115,10 @@ public class Auction {
         return profitAmount;
     }
 
+    public void setProfitAmount(BigDecimal profitAmount) {
+        this.profitAmount = profitAmount;
+    }
+
     public void update(Chit chit, Integer bidNo, boolean extraHand, LocalDate auctionMonth, BigDecimal bidAmount,
             Member winningMember,
             BigDecimal netAmountPaid, BigDecimal agentAmount, BigDecimal profitAmount) {
