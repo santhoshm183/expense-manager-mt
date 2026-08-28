@@ -27,8 +27,10 @@ public class Auction {
     private Chit chit;
     @Column(name = "bid_no", nullable = false)
     private Integer bidNo;
-    @Column(name = "extra_hand", nullable = false)
-    private boolean extraHand;
+    @Column(name = "hand_type", nullable = false)
+    private String handType;
+    @Column(name = "partial_amount", nullable = false)
+    private boolean partialAmount;
     @Column(name = "auction_month", nullable = false)
     private LocalDate auctionMonth;
     @Column(name = "bid_amount", nullable = false, precision = 14, scale = 2)
@@ -50,12 +52,14 @@ public class Auction {
     protected Auction() {
     }
 
-    public Auction(Chit chit, Integer bidNo, boolean extraHand, LocalDate auctionMonth, BigDecimal bidAmount,
+    public Auction(Chit chit, Integer bidNo, String handType, boolean partialAmount, LocalDate auctionMonth,
+            BigDecimal bidAmount,
             Member winningMember,
             BigDecimal netAmountPaid, BigDecimal agentAmount, BigDecimal profitAmount) {
         this.chit = chit;
         this.bidNo = bidNo;
-        this.extraHand = extraHand;
+        this.handType = handType;
+        this.partialAmount = partialAmount;
         this.auctionMonth = auctionMonth;
         this.bidAmount = bidAmount;
         this.winningMember = winningMember;
@@ -91,8 +95,12 @@ public class Auction {
         return auctionMonth;
     }
 
-    public boolean isExtraHand() {
-        return extraHand;
+    public String getHandType() {
+        return handType;
+    }
+
+    public boolean isPartialAmount() {
+        return partialAmount;
     }
 
     public BigDecimal getBidAmount() {
@@ -119,12 +127,14 @@ public class Auction {
         this.profitAmount = profitAmount;
     }
 
-    public void update(Chit chit, Integer bidNo, boolean extraHand, LocalDate auctionMonth, BigDecimal bidAmount,
+    public void update(Chit chit, Integer bidNo, String handType, boolean partialAmount, LocalDate auctionMonth,
+            BigDecimal bidAmount,
             Member winningMember,
             BigDecimal netAmountPaid, BigDecimal agentAmount, BigDecimal profitAmount) {
         this.chit = chit;
         this.bidNo = bidNo;
-        this.extraHand = extraHand;
+        this.handType = handType;
+        this.partialAmount = partialAmount;
         this.auctionMonth = auctionMonth;
         this.bidAmount = bidAmount;
         this.winningMember = winningMember;

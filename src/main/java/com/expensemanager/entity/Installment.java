@@ -86,6 +86,10 @@ public class Installment {
         return installmentDate;
     }
 
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
     public void update(Chit chit, Member member, Integer numberOfHand, BigDecimal installmentAmount,
             LocalDate installmentDate) {
         this.chit = chit;

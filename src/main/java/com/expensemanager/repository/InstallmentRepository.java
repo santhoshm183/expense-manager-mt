@@ -2,6 +2,7 @@ package com.expensemanager.repository;
 
 import java.util.List;
 import java.util.UUID;
+import java.time.LocalDate;
 import java.math.BigDecimal;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,4 +32,13 @@ public interface InstallmentRepository extends JpaRepository<Installment, UUID> 
 
     @Query("select count(i) from Installment i where i.chit.id = :chitId and i.numberOfHand = :hand")
     long countByChitIdAndHand(@Param("chitId") UUID chitId, @Param("hand") Integer hand);
+
+    @Query("select coalesce(sum(i.installmentAmount), 0) from Installment i where i.chit.id = :chitId and i.installmentDate > :after")
+    BigDecimal sumAmountAfterAuction(@Param("chitId") UUID chitId, @Param("after") LocalDate after);
+
+    @Query("select count(i) from Installment i where i.chit.id = :chitId and i.installmentDate > :after")
+    long countAfterAuction(@Param("chitId") UUID chitId, @Param("after") LocalDate after);
+
+    @Query("select max(i.numberOfHand) from Installment i where i.chit.id = :chitId and i.installmentDate > :after")
+    Integer findMaxHandAfterAuction(@Param("chitId") UUID chitId, @Param("after") LocalDate after);
 }

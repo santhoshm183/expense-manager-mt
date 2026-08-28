@@ -18,16 +18,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.expensemanager.dto.TransactionRequest;
 import com.expensemanager.entity.Transaction;
-import com.expensemanager.repository.TransactionRepository;
+import com.expensemanager.service.TransactionService;
 
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
 public class ApiController {
-    private final TransactionRepository transactionRepository;
+    private final TransactionService transactionService;
 
-    public ApiController(TransactionRepository transactionRepository) {
-        this.transactionRepository = transactionRepository;
+    public ApiController(TransactionService transactionService) {
+        this.transactionService = transactionService;
     }
 
     @GetMapping("/health")
@@ -37,30 +37,22 @@ public class ApiController {
 
     @GetMapping("/transactions")
     public List<Transaction> transactions() {
-        return transactionRepository.findAllByOrderByTransactionDateDesc();
+        return transactionService.findAll();
     }
 
     @PostMapping("/transactions")
     public ResponseEntity<Transaction> create(@Valid @RequestBody TransactionRequest request) {
-        Transaction transaction = new Transaction(UUID.randomUUID(), request.date(), request.description(),
-                request.amount(), request.type());
-        return ResponseEntity.status(HttpStatus.CREATED).body(transactionRepository.save(transaction));
+        return ResponseEntity.status(HttpStatus.CREATED).body(transactionService.create(request));
     }
 
     @PutMapping("/transactions/{id}")
     public ResponseEntity<Transaction> update(@PathVariable UUID id, @Valid @RequestBody TransactionRequest request) {
-        return transactionRepository.findById(id).map(transaction -> {
-            transaction.update(request.date(), request.description(), request.amount(), request.type());
-            return ResponseEntity.ok(transactionRepository.save(transaction));
-        }).orElseGet(() -> ResponseEntity.notFound().build());
+        return transactionService.update(id, request);
     }
 
     @DeleteMapping("/transactions/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        if (!transactionRepository.existsById(id))
-            return ResponseEntity.notFound().build();
-        transactionRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return transactionService.delete(id);
     }
 
 }

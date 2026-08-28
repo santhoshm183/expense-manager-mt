@@ -57,7 +57,7 @@ create table if not exists members (
   id uuid primary key default gen_random_uuid(),
   chit_id uuid not null references chits(id) on delete restrict,
   name text not null check (length(trim(name)) > 0),
-  mobile_number varchar(20) not null unique,
+  mobile_number varchar(20) not null,
   email varchar(255),
   permanent_address text,
   chit_taken boolean not null default false,
@@ -109,18 +109,25 @@ create table if not exists chit_auctions (
   chit_id uuid not null references chits(id) on delete cascade,
   bid_no integer not null check (bid_no > 0 and bid_no <= 999),
   extra_hand boolean not null default false,
+  hand_type varchar(20) not null default 'ReleaseHand' check (hand_type in ('ExtrHand', 'ReleaseHand', 'AgentHand')),
+  partial_amount boolean not null default false,
   auction_month date not null,
   bid_amount numeric(14,2) not null check (bid_amount >= 0),
   winning_member_id uuid not null references members(id) on delete restrict,
   net_amount_paid numeric(14,2) not null check (net_amount_paid >= 0),
   agent_amount numeric(14,2) not null check (agent_amount >= 0),
-  profit_amount numeric(14,2) not null check (profit_amount >= 0),
+  profit_amount numeric(14,2) not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (chit_id, bid_no, winning_member_id)
 );
 
-alter table chit_auctions add column if not exists extra_hand boolean not null default false;
+
+update chit_auctions set hand_type = case when extra_hand then 'ExtrHand' else 'ReleaseHand' end where hand_type = 'ReleaseHand';
+do $$ begin
+  alter table chit_auctions add constraint chit_auctions_hand_type_check check (hand_type in ('ExtrHand', 'ReleaseHand', 'AgentHand'));
+exception when duplicate_object then null;
+end $$;
 
 create index if not exists chit_auctions_chit_idx on chit_auctions (chit_id, auction_month);
 drop trigger if exists chit_auctions_updated_at on chit_auctions;

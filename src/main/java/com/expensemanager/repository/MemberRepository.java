@@ -13,5 +13,7 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
     @EntityGraph(attributePaths = "chit")
     List<Member> findAllByChitIdOrderByNameAsc(UUID chitId);
 
+    long countByChitId(UUID chitId);
+
     long deleteByChitId(UUID chitId);
 }
