@@ -27,9 +27,10 @@ public class MemberService {
         this.installmentRepository = installmentRepository;
     }
 
-    public List<MemberResponse> findAll(UUID chitId) {
+    public List<MemberResponse> findAll(UUID chitId, boolean availableOnly) {
         List<Member> members = chitId == null ? memberRepository.findAllByOrderByNameAsc()
-                : memberRepository.findAllByChitIdOrderByNameAsc(chitId);
+                : availableOnly ? memberRepository.findAllByChitIdAndChitTakenFalseOrderByNameAsc(chitId)
+                        : memberRepository.findAllByChitIdOrderByNameAsc(chitId);
         return members.stream().map(MemberResponse::from).toList();
     }
 

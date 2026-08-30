@@ -1,6 +1,7 @@
 package com.expensemanager.contoller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.expensemanager.dto.InstallmentRequest;
 import com.expensemanager.dto.InstallmentResponse;
+import com.expensemanager.dto.BulkInstallmentRequest;
 import com.expensemanager.service.InstallmentService;
 
 @RestController
@@ -30,13 +32,28 @@ public class InstallmentController {
 
     @GetMapping
     public List<InstallmentResponse> installments(@RequestParam(required = false) UUID chitId,
-            @RequestParam(required = false) UUID memberId) {
-        return installmentService.findAll(chitId, memberId);
+            @RequestParam(required = false) UUID memberId, @RequestParam(required = false) Integer hand) {
+        return installmentService.findAll(chitId, memberId, hand);
+    }
+
+    @GetMapping("/next-hand")
+    public Map<String, Integer> nextHand(@RequestParam UUID memberId) {
+        return Map.of("numberOfHand", installmentService.nextHand(memberId));
+    }
+
+    @GetMapping("/next-hand-by-chit")
+    public Map<String, Integer> nextHandByChit(@RequestParam UUID chitId) {
+        return Map.of("numberOfHand", installmentService.nextHandForChit(chitId));
     }
 
     @PostMapping
     public ResponseEntity<?> create(@Valid @RequestBody InstallmentRequest request) {
         return installmentService.create(request);
+    }
+
+    @PostMapping("/bulk")
+    public ResponseEntity<?> createForMembers(@Valid @RequestBody BulkInstallmentRequest request) {
+        return installmentService.createForMembers(request);
     }
 
     @PutMapping("/{id}")

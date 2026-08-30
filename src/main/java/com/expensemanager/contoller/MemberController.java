@@ -29,8 +29,9 @@ public class MemberController {
     }
 
     @GetMapping
-    public List<MemberResponse> members(@RequestParam(required = false) UUID chitId) {
-        return memberService.findAll(chitId);
+    public List<MemberResponse> members(@RequestParam(required = false) UUID chitId,
+            @RequestParam(defaultValue = "false") boolean availableOnly) {
+        return memberService.findAll(chitId, availableOnly);
     }
 
     @PostMapping

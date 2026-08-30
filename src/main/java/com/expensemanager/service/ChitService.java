@@ -17,6 +17,7 @@ import com.expensemanager.entity.ChitStatus;
 import com.expensemanager.repository.AuctionRepository;
 import com.expensemanager.repository.ChitRepository;
 import com.expensemanager.repository.InstallmentRepository;
+import com.expensemanager.repository.IncomeRepository;
 import com.expensemanager.repository.MemberRepository;
 
 @Service
@@ -26,13 +27,16 @@ public class ChitService {
     private final MemberRepository memberRepository;
     private final InstallmentRepository installmentRepository;
     private final AuctionRepository auctionRepository;
+    private final IncomeRepository incomeRepository;
 
     public ChitService(ChitRepository chitRepository, MemberRepository memberRepository,
-            InstallmentRepository installmentRepository, AuctionRepository auctionRepository) {
+            InstallmentRepository installmentRepository, AuctionRepository auctionRepository,
+            IncomeRepository incomeRepository) {
         this.chitRepository = chitRepository;
         this.memberRepository = memberRepository;
         this.installmentRepository = installmentRepository;
         this.auctionRepository = auctionRepository;
+        this.incomeRepository = incomeRepository;
     }
 
     public List<Chit> findAll() {
@@ -46,8 +50,9 @@ public class ChitService {
             return ResponseEntity.notFound().build();
         LocalDate latestAuction = auctionRepository.findLatestAuctionMonthByChitId(id);
         if (latestAuction == null) {
-            return ResponseEntity.ok(new ChitDashboardResponse(id, BigDecimal.ZERO, BigDecimal.ZERO,
-                    chit.getMemberCount(), 0, 0, 0, BigDecimal.ZERO, BigDecimal.ZERO));
+            return ResponseEntity.ok(new ChitDashboardResponse(id, installmentRepository.sumAmount(id), BigDecimal.ZERO,
+                    chit.getMemberCount(), 0, 0, 0, BigDecimal.ZERO, BigDecimal.ZERO,
+                    incomeRepository.sumActiveInterestEarnedAmountByChitId(id)));
         }
         Integer latestHand = installmentRepository.findMaxHandAfterAuction(id, latestAuction);
         BigDecimal collection = installmentRepository.sumAmountAfterAuction(id, latestAuction);
@@ -60,7 +65,8 @@ public class ChitService {
         return ResponseEntity.ok(new ChitDashboardResponse(id, collection,
                 auctionRepository.maxProfitAmountByChitId(id), membersNotPaid, latestHand,
                 auctionRepository.countRegularHandsByChitId(id), auctionRepository.countExtraHandsByChitId(id),
-                auctionRepository.sumNetAmountPaidByChitId(id), auctionRepository.sumAgentAmountByChitId(id)));
+                auctionRepository.sumNetAmountPaidByChitId(id), auctionRepository.sumAgentAmountByChitId(id),
+                incomeRepository.sumActiveInterestEarnedAmountByChitId(id)));
     }
 
     @Transactional

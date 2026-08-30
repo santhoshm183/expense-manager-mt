@@ -133,6 +133,29 @@ create index if not exists chit_auctions_chit_idx on chit_auctions (chit_id, auc
 drop trigger if exists chit_auctions_updated_at on chit_auctions;
 create trigger chit_auctions_updated_at before update on chit_auctions for each row execute function set_updated_at();
 
+create table if not exists chit_income (
+  id uuid primary key default gen_random_uuid(),
+  chit_id uuid not null references chits(id) on delete cascade,
+  income_amount numeric(14,2) not null check (income_amount >= 0),
+  percentage numeric(5,2) not null check (percentage >= 0 and percentage <= 100),
+  number_of_months integer not null check (number_of_months between 1 and 12),
+  interest_earned_amount numeric(14,2) not null check (interest_earned_amount >= 0),
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- alter table chit_income add column if not exists income_amount numeric(14,2) not null default 0;
+-- alter table chit_income add column if not exists percentage numeric(5,2) not null default 0;
+-- alter table chit_income add column if not exists number_of_months integer not null default 1;
+-- alter table chit_income add column if not exists interest_earned_amount numeric(14,2) not null default 0;
+-- alter table chit_income add column if not exists active boolean not null default true;
+-- alter table chit_income add column if not exists created_at timestamptz not null default now();
+-- alter table chit_income add column if not exists updated_at timestamptz not null default now();
+create index if not exists chit_income_chit_idx on chit_income (chit_id, created_at);
+drop trigger if exists chit_income_updated_at on chit_income;
+create trigger chit_income_updated_at before update on chit_income for each row execute function set_updated_at();
+
 
 
 

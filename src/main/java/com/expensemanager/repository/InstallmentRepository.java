@@ -36,9 +36,23 @@ public interface InstallmentRepository extends JpaRepository<Installment, UUID> 
     @Query("select coalesce(sum(i.installmentAmount), 0) from Installment i where i.chit.id = :chitId and i.installmentDate > :after")
     BigDecimal sumAmountAfterAuction(@Param("chitId") UUID chitId, @Param("after") LocalDate after);
 
+    @Query("select coalesce(sum(i.installmentAmount), 0) from Installment i where i.chit.id = :chitId")
+    BigDecimal sumAmount(@Param("chitId") UUID chitId);
+
     @Query("select count(i) from Installment i where i.chit.id = :chitId and i.installmentDate > :after")
     long countAfterAuction(@Param("chitId") UUID chitId, @Param("after") LocalDate after);
 
     @Query("select max(i.numberOfHand) from Installment i where i.chit.id = :chitId and i.installmentDate > :after")
     Integer findMaxHandAfterAuction(@Param("chitId") UUID chitId, @Param("after") LocalDate after);
+
+    @Query("select coalesce(max(i.numberOfHand), 0) from Installment i where i.member.id = :memberId")
+    Integer findMaxHandByMemberId(@Param("memberId") UUID memberId);
+
+    @Query("select coalesce(max(i.numberOfHand), 0) from Installment i where i.chit.id = :chitId")
+    Integer findMaxHandByChitIdOrZero(@Param("chitId") UUID chitId);
+
+    @EntityGraph(attributePaths = { "chit", "member" })
+    @Query("select i from Installment i where (:chitId is null or i.chit.id = :chitId) and (:memberId is null or i.member.id = :memberId) and (:hand is null or i.numberOfHand = :hand) order by i.installmentDate desc")
+    List<Installment> findFiltered(@Param("chitId") UUID chitId, @Param("memberId") UUID memberId,
+            @Param("hand") Integer hand);
 }

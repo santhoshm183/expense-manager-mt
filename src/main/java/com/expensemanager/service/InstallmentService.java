@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.expensemanager.dto.InstallmentRequest;
 import com.expensemanager.dto.InstallmentResponse;
+import com.expensemanager.dto.BulkInstallmentRequest;
 import com.expensemanager.entity.Chit;
 import com.expensemanager.entity.Installment;
 import com.expensemanager.entity.Member;
@@ -29,15 +30,17 @@ public class InstallmentService {
         this.installmentRepository = installmentRepository;
     }
 
-    public List<InstallmentResponse> findAll(UUID chitId, UUID memberId) {
-        List<Installment> installments;
-        if (memberId != null)
-            installments = installmentRepository.findAllByMemberIdOrderByInstallmentDateDesc(memberId);
-        else if (chitId != null)
-            installments = installmentRepository.findAllByChitIdOrderByInstallmentDateDesc(chitId);
-        else
-            installments = installmentRepository.findAllByOrderByInstallmentDateDesc();
+    public List<InstallmentResponse> findAll(UUID chitId, UUID memberId, Integer hand) {
+        List<Installment> installments = installmentRepository.findFiltered(chitId, memberId, hand);
         return installments.stream().map(InstallmentResponse::from).toList();
+    }
+
+    public int nextHand(UUID memberId) {
+        return installmentRepository.findMaxHandByMemberId(memberId) + 1;
+    }
+
+    public int nextHandForChit(UUID chitId) {
+        return installmentRepository.findMaxHandByChitIdOrZero(chitId) + 1;
     }
 
     @Transactional
@@ -52,6 +55,30 @@ public class InstallmentService {
                 request.installmentDate());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(InstallmentResponse.from(installmentRepository.save(installment)));
+    }
+
+    @Transactional
+    public ResponseEntity<?> createForMembers(BulkInstallmentRequest request) {
+        Chit chit = chitRepository.findById(request.chitId()).orElse(null);
+        if (chit == null)
+            return ResponseEntity.notFound().build();
+        if (request.numberOfHand() > chit.getDurationMonths())
+            return invalidHand();
+
+        List<Member> selectedMembers = memberRepository.findAllById(request.memberIds());
+        if (selectedMembers.size() != request.memberIds().stream().distinct().count()
+                || selectedMembers.stream().anyMatch(member -> !member.getChit().getId().equals(chit.getId()))) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "One or more selected members do not belong to this chit."));
+        }
+
+        List<InstallmentResponse> created = selectedMembers.stream()
+                .map(member -> new Installment(chit, member, request.numberOfHand(), request.installmentAmount(),
+                        request.installmentDate()))
+                .map(installmentRepository::save)
+                .map(InstallmentResponse::from)
+                .toList();
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @Transactional
