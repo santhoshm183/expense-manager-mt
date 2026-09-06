@@ -74,7 +74,7 @@ public class AuctionService {
 
         BigDecimal agentPercentage = "AgentHand".equals(handType) ? BigDecimal.ZERO : chit.getAgentPercentage();
         BigDecimal agentAmount = agentPercentage.compareTo(BigDecimal.ZERO) > 0
-                ? chit.getMonthlyInstallment().multiply(agentPercentage).divide(BigDecimal.valueOf(100), 2,
+                ? chit.getTotalAmount().multiply(agentPercentage).divide(BigDecimal.valueOf(100), 2,
                         RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
         BigDecimal netAmountPaid = chit.getTotalAmount().subtract(request.bidAmount());
