@@ -6,6 +6,7 @@ import java.util.UUID;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.expensemanager.dto.ChitDashboardResponse;
 import com.expensemanager.dto.ChitRequest;
@@ -31,8 +33,13 @@ public class ChitController {
     }
 
     @GetMapping("/chits")
-    public List<Chit> chits() {
-        return chitService.findAll();
+    public List<Chit> chits(@RequestParam(required = false) UUID chitId) {
+        if (chitId == null) {
+            return chitService.findAll();
+        }
+        return chitService.findAll().stream()
+                .filter(item -> item.getId().equals(chitId))
+                .toList();
     }
 
     @GetMapping("/chits/{id}/summary")
@@ -41,16 +48,19 @@ public class ChitController {
     }
 
     @PostMapping("/chits")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Chit> createChit(@Valid @RequestBody ChitRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(chitService.create(request));
     }
 
     @PutMapping("/chits/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Chit> updateChit(@PathVariable UUID id, @Valid @RequestBody ChitRequest request) {
         return chitService.update(id, request);
     }
 
     @DeleteMapping("/chits/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteChit(@PathVariable UUID id) {
         return chitService.delete(id);
     }

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,21 +48,25 @@ public class InstallmentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> create(@Valid @RequestBody InstallmentRequest request) {
         return installmentService.create(request);
     }
 
     @PostMapping("/bulk")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createForMembers(@Valid @RequestBody BulkInstallmentRequest request) {
         return installmentService.createForMembers(request);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> update(@PathVariable UUID id, @Valid @RequestBody InstallmentRequest request) {
         return installmentService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         return installmentService.delete(id);
     }

@@ -6,6 +6,7 @@ import java.util.UUID;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,16 +42,19 @@ public class ApiController {
     }
 
     @PostMapping("/transactions")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Transaction> create(@Valid @RequestBody TransactionRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(transactionService.create(request));
     }
 
     @PutMapping("/transactions/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Transaction> update(@PathVariable UUID id, @Valid @RequestBody TransactionRequest request) {
         return transactionService.update(id, request);
     }
 
     @DeleteMapping("/transactions/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         return transactionService.delete(id);
     }

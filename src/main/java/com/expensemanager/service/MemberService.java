@@ -4,12 +4,16 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.expensemanager.dto.MemberRequest;
 import com.expensemanager.dto.MemberResponse;
+import com.expensemanager.entity.AppUser;
+import com.expensemanager.entity.AppUserRole;
 import com.expensemanager.entity.Chit;
 import com.expensemanager.entity.Member;
+import com.expensemanager.repository.AppUserRepository;
 import com.expensemanager.repository.ChitRepository;
 import com.expensemanager.repository.InstallmentRepository;
 import com.expensemanager.repository.MemberRepository;
@@ -19,12 +23,17 @@ public class MemberService {
     private final ChitRepository chitRepository;
     private final MemberRepository memberRepository;
     private final InstallmentRepository installmentRepository;
+    private final AppUserRepository appUserRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public MemberService(ChitRepository chitRepository, MemberRepository memberRepository,
-            InstallmentRepository installmentRepository) {
+            InstallmentRepository installmentRepository, AppUserRepository appUserRepository,
+            PasswordEncoder passwordEncoder) {
         this.chitRepository = chitRepository;
         this.memberRepository = memberRepository;
         this.installmentRepository = installmentRepository;
+        this.appUserRepository = appUserRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<MemberResponse> findAll(UUID chitId, boolean availableOnly) {
@@ -43,9 +52,35 @@ public class MemberService {
             return ResponseEntity.badRequest().body(java.util.Map.of("message",
                     "Cannot add member. This chit already has all members assigned."));
         }
+
+        boolean hasUsername = request.username() != null && !request.username().isBlank();
+        boolean hasPassword = request.password() != null && !request.password().isBlank();
+        if (hasUsername != hasPassword) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message",
+                    "Both username and password are required when creating a member login."));
+        }
+
+        String normalizedUsername = hasUsername ? request.username().trim() : null;
+        if (normalizedUsername != null && appUserRepository.existsByUsername(normalizedUsername)) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message",
+                    "Username already exists."));
+        }
+
         Member member = new Member(chit, request.name(), request.mobileNumber(), request.email(),
                 request.permanentAddress());
-        return ResponseEntity.status(HttpStatus.CREATED).body(MemberResponse.from(memberRepository.save(member)));
+        Member savedMember = memberRepository.save(member);
+
+        if (normalizedUsername != null) {
+            AppUser appUser = new AppUser(
+                    normalizedUsername,
+                    passwordEncoder.encode(request.password()),
+                    AppUserRole.MEMBER,
+                    savedMember,
+                    true);
+            appUserRepository.save(appUser);
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(MemberResponse.from(savedMember));
     }
 
     @Transactional

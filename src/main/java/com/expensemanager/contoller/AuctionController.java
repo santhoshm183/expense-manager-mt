@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,16 +35,19 @@ public class AuctionController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> create(@Valid @RequestBody AuctionRequest request) {
         return auctionService.create(request);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> update(@PathVariable UUID id, @Valid @RequestBody AuctionRequest request) {
         return auctionService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         return auctionService.delete(id);
     }

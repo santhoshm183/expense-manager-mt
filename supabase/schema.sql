@@ -156,7 +156,40 @@ create index if not exists chit_income_chit_idx on chit_income (chit_id, created
 drop trigger if exists chit_income_updated_at on chit_income;
 create trigger chit_income_updated_at before update on chit_income for each row execute function set_updated_at();
 
+create type app_user_role as enum ('ADMIN', 'MEMBER');
 
+create table if not exists users (
+  id uuid primary key default gen_random_uuid(),
+  username varchar(64) not null unique,
+  password text not null,
+  role app_user_role not null,
+  member_id uuid null,
+  enabled boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  last_login_at timestamptz,
+  constraint users_member_fk foreign key (member_id) references members(id) on delete set null
+);
 
+create unique index if not exists users_member_unique_idx
+  on users (member_id)
+  where member_id is not null;
+
+create index if not exists users_username_idx on users (username);
+create index if not exists users_member_idx on users (member_id);
+
+create trigger users_updated_at before update on users for each row execute function set_updated_at();
+
+create table if not exists refresh_tokens (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  token_hash text not null unique,
+  expires_at timestamptz not null,
+  revoked boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists refresh_tokens_user_idx on refresh_tokens (user_id);
+create index if not exists refresh_tokens_expires_idx on refresh_tokens (expires_at);
 
 -- This first version has no authentication. Enable RLS and ownership policies before multi-user access.

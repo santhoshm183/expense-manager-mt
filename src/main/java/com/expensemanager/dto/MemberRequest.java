@@ -9,9 +9,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record MemberRequest(
-        @NotNull UUID chitId,
-        @NotBlank String name,
-        @NotBlank String mobileNumber,
-        String email,
-        String permanentAddress) {
+                @NotNull UUID chitId,
+                @NotBlank String name,
+                @NotBlank String mobileNumber,
+                String email,
+                String permanentAddress,
+                String username,
+                String password) {
 }

@@ -20,7 +20,7 @@ public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "chit_id", nullable = false)
     private Chit chit;
     @Column(nullable = false)
