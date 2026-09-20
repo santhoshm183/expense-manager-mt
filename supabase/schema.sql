@@ -117,6 +117,7 @@ create table if not exists chit_auctions (
   net_amount_paid numeric(14,2) not null check (net_amount_paid >= 0),
   agent_amount numeric(14,2) not null check (agent_amount >= 0),
   profit_amount numeric(14,2) not null,
+  profit_value numeric(14,2) not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (chit_id, bid_no, winning_member_id)

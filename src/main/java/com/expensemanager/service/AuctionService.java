@@ -79,6 +79,7 @@ public class AuctionService {
                 : BigDecimal.ZERO;
         BigDecimal netAmountPaid = chit.getTotalAmount().subtract(request.bidAmount());
         BigDecimal profitAmount = request.bidAmount().subtract(agentAmount);
+        BigDecimal profitValue = profitAmount;
         if (profitAmount.signum() < 0)
             return ResponseEntity.badRequest().body(Map.of("message", AVAILABLE_BALANCE_MESSAGE));
 
@@ -111,11 +112,11 @@ public class AuctionService {
         Auction auction = existing == null
                 ? new Auction(chit, bidNo, handType, request.partialAmount(), request.auctionMonth(),
                         request.bidAmount(),
-                        member, netAmountPaid, agentAmount, profitAmount)
+                        member, netAmountPaid, agentAmount, profitAmount, profitValue)
                 : existing;
         if (existing != null)
             auction.update(chit, bidNo, handType, request.partialAmount(), request.auctionMonth(), request.bidAmount(),
-                    member, netAmountPaid, agentAmount, profitAmount);
+                    member, netAmountPaid, agentAmount, profitAmount, profitValue);
         member.markChitTaken(true);
         return ResponseEntity.status(existing == null ? HttpStatus.CREATED : HttpStatus.OK)
                 .body(AuctionResponse.from(auctionRepository.save(auction)));

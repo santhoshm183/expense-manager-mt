@@ -9,13 +9,13 @@ public record AuctionResponse(UUID id, UUID chitId, String chitName, Integer bid
         boolean partialAmount,
         LocalDate auctionMonth,
         BigDecimal bidAmount, UUID winningMemberId, String winningMemberName, BigDecimal netAmountPaid,
-        BigDecimal agentAmount, BigDecimal profitAmount) {
+        BigDecimal agentAmount, BigDecimal profitAmount, BigDecimal profitValue) {
     public static AuctionResponse from(Auction auction) {
         return new AuctionResponse(auction.getId(), auction.getChit().getId(), auction.getChit().getName(),
                 auction.getBidNo(), auction.getHandType(), auction.isPartialAmount(), auction.getAuctionMonth(),
                 auction.getBidAmount(),
                 auction.getWinningMember().getId(),
                 auction.getWinningMember().getName(), auction.getNetAmountPaid(), auction.getAgentAmount(),
-                auction.getProfitAmount());
+                auction.getProfitAmount(), auction.getProfitValue());
     }
 }

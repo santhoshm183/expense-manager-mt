@@ -44,6 +44,8 @@ public class Auction {
     private BigDecimal agentAmount;
     @Column(name = "profit_amount", nullable = false, precision = 14, scale = 2)
     private BigDecimal profitAmount;
+    @Column(name = "profit_value", nullable = false, precision = 14, scale = 2)
+    private BigDecimal profitValue;
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
     @Column(name = "updated_at", nullable = false)
@@ -55,7 +57,7 @@ public class Auction {
     public Auction(Chit chit, Integer bidNo, String handType, boolean partialAmount, LocalDate auctionMonth,
             BigDecimal bidAmount,
             Member winningMember,
-            BigDecimal netAmountPaid, BigDecimal agentAmount, BigDecimal profitAmount) {
+            BigDecimal netAmountPaid, BigDecimal agentAmount, BigDecimal profitAmount, BigDecimal profitValue) {
         this.chit = chit;
         this.bidNo = bidNo;
         this.handType = handType;
@@ -66,6 +68,7 @@ public class Auction {
         this.netAmountPaid = netAmountPaid;
         this.agentAmount = agentAmount;
         this.profitAmount = profitAmount;
+        this.profitValue = profitValue;
     }
 
     @PrePersist
@@ -127,10 +130,18 @@ public class Auction {
         this.profitAmount = profitAmount;
     }
 
+    public BigDecimal getProfitValue() {
+        return profitValue;
+    }
+
+    public void setProfitValue(BigDecimal profitValue) {
+        this.profitValue = profitValue;
+    }
+
     public void update(Chit chit, Integer bidNo, String handType, boolean partialAmount, LocalDate auctionMonth,
             BigDecimal bidAmount,
             Member winningMember,
-            BigDecimal netAmountPaid, BigDecimal agentAmount, BigDecimal profitAmount) {
+            BigDecimal netAmountPaid, BigDecimal agentAmount, BigDecimal profitAmount, BigDecimal profitValue) {
         this.chit = chit;
         this.bidNo = bidNo;
         this.handType = handType;
@@ -141,5 +152,6 @@ public class Auction {
         this.netAmountPaid = netAmountPaid;
         this.agentAmount = agentAmount;
         this.profitAmount = profitAmount;
+        this.profitValue = profitValue;
     }
 }

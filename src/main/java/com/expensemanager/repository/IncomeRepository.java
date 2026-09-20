@@ -18,4 +18,7 @@ public interface IncomeRepository extends JpaRepository<Income, UUID> {
 
     @Query("select coalesce(sum(i.interestEarnedAmount), 0) from Income i where i.chit.id = :chitId and i.active = true")
     BigDecimal sumActiveInterestEarnedAmountByChitId(@Param("chitId") UUID chitId);
+
+    @Query("select coalesce(sum(i.interestEarnedAmount), 0) from Income i where i.chit.id = :chitId")
+    BigDecimal sumInterestEarnedAmountByChitId(@Param("chitId") UUID chitId);
 }

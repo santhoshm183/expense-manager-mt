@@ -52,7 +52,8 @@ public class ChitService {
         if (latestAuction == null) {
             return ResponseEntity.ok(new ChitDashboardResponse(id, installmentRepository.sumAmount(id), BigDecimal.ZERO,
                     chit.getMemberCount(), 0, 0, 0, BigDecimal.ZERO, BigDecimal.ZERO,
-                    incomeRepository.sumActiveInterestEarnedAmountByChitId(id)));
+                    incomeRepository.sumActiveInterestEarnedAmountByChitId(id),
+                    incomeRepository.sumInterestEarnedAmountByChitId(id)));
         }
         Integer latestHand = installmentRepository.findMaxHandAfterAuction(id, latestAuction);
         BigDecimal collection = installmentRepository.sumAmountAfterAuction(id, latestAuction);
@@ -66,7 +67,8 @@ public class ChitService {
                 auctionRepository.maxProfitAmountByChitId(id), membersNotPaid, latestHand,
                 auctionRepository.countRegularHandsByChitId(id), auctionRepository.countExtraHandsByChitId(id),
                 auctionRepository.sumNetAmountPaidByChitId(id), auctionRepository.sumAgentAmountByChitId(id),
-                incomeRepository.sumActiveInterestEarnedAmountByChitId(id)));
+                incomeRepository.sumActiveInterestEarnedAmountByChitId(id),
+                incomeRepository.sumInterestEarnedAmountByChitId(id)));
     }
 
     @Transactional
